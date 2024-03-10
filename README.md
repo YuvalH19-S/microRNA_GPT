@@ -14,6 +14,7 @@ After that, we can split the data to train and test. We do this using 'preproces
 
 The script we can use now is 'Human_fine_tune_star_mature.ipynb', there we do fine tune on the previous model, using human data (with or without flanks). We can generate sequences - full seq or with completions of mature/star - using the test data from the previous script.
 
+Lastly, we use the script 'Extract_features_only_nts.ipynb' to extract features from the generated sequences.
 
 ## [Placeholder for Training Scripts]
 
