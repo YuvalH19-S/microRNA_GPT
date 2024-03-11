@@ -30,6 +30,7 @@ Paths for input data and where to save the output data
 ### Tokenization
 After that, we run in **colab** the code that is in the file 'tokenization.ipynb', where we create and train the tokenizer on the data (bastian + mirGeneDB) to use later.
 
+### Training notebooks
 Then, we use 'GPT_pretrained_mature_star_after_preprocess.ipynb', this script use the tokenizer we've trained, (with or without flanks), then we train a model based on bastian data and then second train on mirGeneDB data.
 
 After that, we can split the data to train and test. We do this using 'preprocess_cluster.ipynb', where we remove duplicates of pre-mirna and create clusters, based on mature similarity > 80%. We take some of the clusters to test - we use inly the human data from this cluseters to be the test.
