@@ -4,8 +4,30 @@ This repository contains scripts and tools for collecting, filtering, and extrac
 
 ## Data Collection and Preprocessing
 
-The initial script, `preapare_data_gff.ipynb`, is designed to collect microRNA data from various sources, apply a series of filters to ensure data quality, and extract relevant biological features for further analysis. This script lays the foundation for generating a high-quality dataset suitable for training machine learning models, including GPT-based architectures, to predict or analyze microRNA sequences.
+The preprocessing pipeline has been updated to include a more streamlined and configurable process, allowing for greater flexibility and automation in preparing datasets for machine learning models, including GPT-based architectures.
 
+### Preprocessing Pipeline Overview
+
+The `preprocess.py` script contain the data collection, filtering, and feature extraction process. It gets data paths configurations specified in `preprocess_config.ini` for easy modification of input and output paths without needing to alter the script directly.
+
+### `utils.py`
+
+The `utils.py` file contains essential functions used by `preprocess.py`, including data collection routines, filtering mechanisms, and feature extraction algorithms.
+
+### Configuration with `preprocess_config.ini`
+
+Paths for input data and where to save the output data
+
+### Running the Preprocessing Pipeline
+
+1. Configure `preprocess_config.ini` with the appropriate paths and settings for your data and processing needs.
+2. Run the pipeline:
+    ```bash
+    python preprocess.py
+    ```
+    This will collect data as specified, apply filters, extract features, and output the processed datasets ready for machine learning model training.
+
+### Tokenization
 After that, we run in **colab** the code that is in the file 'tokenization.ipynb', where we create and train the tokenizer on the data (bastian + mirGeneDB) to use later.
 
 Then, we use 'GPT_pretrained_mature_star_after_preprocess.ipynb', this script use the tokenizer we've trained, (with or without flanks), then we train a model based on bastian data and then second train on mirGeneDB data.
