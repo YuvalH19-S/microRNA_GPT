@@ -4,8 +4,6 @@ This repository contains scripts and tools for collecting, filtering, and extrac
 
 ## Data Collection and Preprocessing
 
-The preprocessing pipeline has been updated to include a more streamlined and configurable process, allowing for greater flexibility and automation in preparing datasets for machine learning models, including GPT-based architectures.
-
 ### Preprocessing Pipeline Overview
 
 The `preprocess.py` script contain the data collection, filtering, and feature extraction process. It gets data paths configurations specified in `preprocess_config.ini` for easy modification of input and output paths without needing to alter the script directly.
