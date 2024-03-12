@@ -4,7 +4,6 @@ from Bio.Seq import Seq
 import subprocess
 import os
 from collections import Counter
-tqdm.pandas()
 from Bio.SeqUtils import nt_search
 from Bio import pairwise2
 from Bio.pairwise2 import format_alignment
@@ -13,7 +12,7 @@ os.environ["PATH"] += os.pathsep + os.path.dirname(rna_fold_path)
 import json
 import RNA
 import itertools
-from tqdm.auto import tqdm
+from tqdm import tqdm
 import pandas as pd
 # ----------------- General utility functions -----------------
 
@@ -51,6 +50,44 @@ def get_ct_data(sequence, structure, output_file):
                 ct_data[i] = [i, nt, prev_nt, next_nt, 0, i]
 
     return ct_data
+
+def load_specific_columns(csv_path):
+    """
+    Load a CSV file and return a DataFrame with specific columns.
+
+    Parameters:
+    - csv_path (str): The path to the CSV file.
+
+    Returns:
+    - pd.DataFrame: A DataFrame containing only the specified columns.
+    """
+    # Attempt to read the CSV file
+    try:
+        df = pd.read_csv(csv_path)
+    except FileNotFoundError:
+        raise FileNotFoundError(f"The file at {csv_path} was not found.")
+    except Exception as e:
+        raise Exception(f"An error occurred while reading {csv_path}: {e}")
+
+    # Specify the required columns
+    required_columns = ["full_seq", "full_seq_folding", "Mature", "Star"]
+
+    # Check if all required columns are in the DataFrame
+    missing_columns = [col for col in required_columns if col not in df.columns]
+    if missing_columns:
+        raise ValueError(f"Missing required columns in the CSV file: {missing_columns}")
+        
+    # Filter out rows where any of the required columns contain non-string (specifically float, as it likely indicates NaNs)
+    for col in required_columns:
+        df = df[pd.to_numeric(df[col], errors='coerce').isna()]  # Keeps rows where conversion to numeric fails (i.e., strings)
+
+    df[required_columns] = df[required_columns].astype(str)
+
+    # Remove rows with 'nan' values if they were converted to string 'nan'
+    df = df[~df[required_columns].isin(['nan']).any(axis=1)]
+
+    # Return the DataFrame with only the required columns
+    return df[required_columns]
 
 def dotbracket_to_ct(sequence, structure):
     # Initialize the list for CT data
@@ -91,9 +128,11 @@ def prepare_mirgendb_data(full_seq_file, mature_file, star_file):
     # Add mature and star sequences by matching IDs
     df['Mature'] = df.index.map(matures).fillna('')
     df['Star'] = df.index.map(stars).fillna('')
-    
+    tqdm.pandas()
     # Compute RNA folding for full sequences
-    df['full_seq_folding'] = df['full_seq'].apply(rnafold)
+    
+    print('adding rna fold - take long time')
+    df['full_seq_folding'] = df['full_seq'].progress_apply(rnafold)
     
     return df
 
@@ -232,63 +271,6 @@ def filter_mirMachine_data(mirMachine_path, mirGendb_path): # First filter of mi
     print(f"Length of filtered_by_mature_length: {len(filtered_by_mature_length)}")
     return filtered_by_mature_length
 
-def find_star_sequence(hairpin, mature):
-    # Compute the secondary structure
-    ss, _ = RNA.fold(hairpin)
-    pairing_list = RNA.ptable(ss)
-    mature_start = hairpin.find(mature)
-
-    # Determine the direction of the mature sequence
-    if mature_start <= 5:
-        direction = '5p'
-    else:
-        direction = '3p'
-
-    # Initialize variables
-    star_start = None
-    star_end = None
-
-    # Logic for finding the STAR sequence start and end
-    if direction == '5p':
-        # Find the end of the STAR sequence for mature at the start
-        paired_pos = pairing_list[mature_start + len(mature)]
-        if paired_pos != 0:
-            # STAR sequence starts two nucleotides after the paired position
-            star_start = paired_pos + 2 -1 
-        else:
-            # Find the next paired nucleotide if the last of mature is not paired
-            for i in range(len(mature) - 1, -1, -1):
-                if pairing_list[mature_start + i] != 0:
-                    dist = len(mature) - i 
-                    star_start = pairing_list[mature_start + i] + 2 - dist - 1
-                    break
-    else:
-        # Mature is at the end, find the start of the STAR sequence
-        paired_pos = pairing_list[mature_start]
-        if paired_pos != 0:
-            # STAR sequence ends two nucleotides before the paired position
-            star_end = paired_pos + 2 -1 
-        else:
-            # Find the next paired nucleotide if the first of mature is not paired
-            for i in range(len(mature)):
-                if pairing_list[mature_start + i] != 0:
-                    star_end = pairing_list[mature_start + i] - 2 + i -1 
-                    break
-
-    # Adjusting the logic for extracting the STAR sequence based on direction and the new logic
-    star_sequence = None
-    if direction == '5p' and star_start is not None:
-        star_sequence = hairpin[star_start:]
-    elif direction == '3p' and star_end is not None:
-        star_sequence = hairpin[:star_end]
-        star_start = 0  # STAR starts at the beginning of the hairpin for 3p direction
-
-    if star_sequence:
-        star_length = len(star_sequence)
-    else:
-        return None
-
-    return star_sequence, star_start, star_length, ss, mature_start
 
 def find_star_sequence(hairpin, mature):
     # Compute the secondary structure
@@ -763,7 +745,6 @@ def extract_features_only_nts(decoded_seq, full_seq_folding, mature, star):
     star_start = decoded_seq.find(star)
     star_end = star_start + len(star) - 1  # Adjust to 0-based indexing
     if mature_start < 0 or star_start < 0:
-        print('mature ot start invalid')
         return None
 
     if mature_start < star_start:
@@ -776,12 +757,12 @@ def extract_features_only_nts(decoded_seq, full_seq_folding, mature, star):
         flank1 = decoded_seq[:star_start]
         flank2 = decoded_seq[mature_end+1:]
         direction = '3p'
-
     # Compute the seed section
     seed_start = mature_start + 2  # 2nd nucleotide, 0-indexed
     seed_end = seed_start + 7  # 7th nucleotide, 0-indexed
     seed = decoded_seq[seed_start-1:seed_end-1]  
     seed_family = check_seed_family(seed) # loading dict from shared folder 
+    
 
     # Calculate the indices for Loop, flank1, and flank2
     loop_start_index = decoded_seq.find(loop) + 1
@@ -792,6 +773,7 @@ def extract_features_only_nts(decoded_seq, full_seq_folding, mature, star):
 
     flank2_start_index = decoded_seq.find(flank2) + 1
     flank2_end_index = flank2_start_index + len(flank2) - 1
+    
     
     mature_range, star_range = (adjust_index(mature_start), adjust_index(mature_end)), (adjust_index(star_start), adjust_index(star_end))
     
@@ -930,8 +912,9 @@ def process_rna_sequences(rna_sequences):
 def extract_features_from_df(rna_df):
     features = []
     # Add tqdm around your loop
+    print('Starting extract features')
     for index, row in tqdm(rna_df.iterrows(), total=len(rna_df), desc="Extracting features"):
-        feature = extract_features_only_nts(row['full_seq'], row['full_seq_folding'], row['mature'], row['star'])
+        feature = extract_features_only_nts(row['full_seq'], row['full_seq_folding'], row['Mature'], row['Star'])
         if feature:
             features.append(feature)
 
