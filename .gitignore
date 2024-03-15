@@ -1,0 +1,12 @@
+.idea
+*.pyc
+*.csv
+*.gff
+*.fa
+*.png
+*.h5
+*.nfs*
+*.sh
+*.out
+*.vscode*
+*.nfs*
