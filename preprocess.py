@@ -1,14 +1,7 @@
 # preprocess.py
 import configparser
-import random
-import pandas as pd
-from Bio import SeqIO
-import matplotlib.pyplot as plt
-import subprocess
-import itertools
-from collections import Counter
 import logging
-from utils import *
+from utils import run_features_on_sebastian_db,load_specific_columns,extract_features_from_df,filter_mirMachine_data,final_mirMachine_preprocess
 
 def main():
     # Setup logging

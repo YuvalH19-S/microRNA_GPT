@@ -10,3 +10,6 @@
 *.out
 *.vscode*
 *.nfs*
+*.log
+*.ct
+filtered_counts.txt
