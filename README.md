@@ -43,7 +43,7 @@ Training scripts and methodologies will be added here. These scripts will detail
 
 ## Getting Started
 
-(Instructions on how to use the scripts, set up the environment, etc.)
+(Instructions on how to use the scripts, set up the environment, etc..)
 
 ## Contributing
 
