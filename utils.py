@@ -379,22 +379,13 @@ def filter_dataset(df, star_length_threshold=(22,25), mature_length_threshold=(2
     return filtered_df
 
 
-def update_mature_sequences(df):
-    # Make sure 'mature_start' is of integer type for comparison where it's not NaN
-    df['mature_start'] = df['mature_start'].astype('Int64')  
-    
-    # Define a function to apply to each row
-    def update_row(row):
-        if pd.notna(row['mature_start']) and row['mature_start'] > 30:
-            new_mature = row['hairpin_trimmed'][row['mature_start']-1:]
-            row['mature'] = new_mature
-            row['mature_len'] = len(new_mature)
-        return row
-    
-    # Apply the function across the DataFrame row-wise
-    df = df.apply(update_row, axis=1)
-    
-    return df
+def update_mature_sequences(row):
+    if pd.notna(row['mature_start']) and row['mature_start'] > 30:
+        new_mature = row['hairpin_trimmed'][row['mature_start']-1:]
+        row['mature'] = new_mature
+        row['mature_len'] = len(new_mature)
+    return row
+
 
 def calculate_loop_length(row):
     # Assuming the mature sequence comes after the star sequence
@@ -408,7 +399,7 @@ def calculate_loop_length(row):
     return max(0, loop_end - loop_start + 1)
 
 def final_mirMachine_preprocess(df,save_path = None):
-    
+
     print("Running final preprocessing on mirMachine data")
     df = add_star_and_folding_information(df)
     print("Star sequence and folding information added")
